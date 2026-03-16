@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: problemmarket-backend
+    env: node
+    plan: starter
+    rootDir: .
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_SSL
+        value: "true"
+      - key: CORS_ORIGIN
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: problemmarket-db
+          property: connectionString
+
+databases:
+  - name: problemmarket-db
+    databaseName: problemmarket
+    user: problemmarket
+    plan: starter
