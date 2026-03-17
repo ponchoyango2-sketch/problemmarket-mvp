@@ -22,6 +22,8 @@ export const api = {
   createProblem: (body, token) => request('POST', '/problems', body, token),
   createCheckoutSession: (body, token) =>
     request('POST', '/api/payments/create-checkout-session', body, token),
+  getCheckoutSessionStatus: (sessionId, token) =>
+    request('GET', `/api/payments/session-status?session_id=${encodeURIComponent(sessionId)}`, null, token),
   submitSolution: (problemId, body, token) =>
     request('POST', `/problems/${problemId}/solutions`, body, token),
   selectWinner: (problemId, body, token) =>

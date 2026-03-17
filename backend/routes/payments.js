@@ -161,6 +161,81 @@ router.post('/create-checkout-session', verifyToken, async (req, res) => {
   }
 });
 
+router.get('/session-status', verifyToken, async (req, res) => {
+  if (!stripe) {
+    return res.status(503).json({ error: 'Stripe is not configured' });
+  }
+
+  const sessionId = String(req.query.session_id || '').trim();
+  if (!sessionId || !sessionId.startsWith('cs_')) {
+    return res.status(400).json({ error: 'valid session_id is required' });
+  }
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+    // Prevent users from checking someone else's payment session.
+    if (session.metadata?.userId && session.metadata.userId !== req.user.userId) {
+      return res.status(403).json({ error: 'Forbidden payment session' });
+    }
+
+    let problem = null;
+    const problemIdFromMetadata = session.metadata?.problemId || null;
+
+    if (problemIdFromMetadata) {
+      const byId = await db.query(
+        `SELECT p.id, p.title, p.status, p.fee_paid, r.amount, r.currency
+         FROM problems p
+         LEFT JOIN rewards r ON p.reward_id = r.id
+         WHERE p.id = $1 AND p.publisher_id = $2`,
+        [problemIdFromMetadata, req.user.userId]
+      );
+      if (byId.rowCount > 0) {
+        problem = byId.rows[0];
+      }
+    }
+
+    if (!problem) {
+      const bySession = await db.query(
+        `SELECT p.id, p.title, p.status, p.fee_paid, r.amount, r.currency
+         FROM problems p
+         LEFT JOIN rewards r ON p.reward_id = r.id
+         WHERE p.stripe_session_id = $1 AND p.publisher_id = $2`,
+        [sessionId, req.user.userId]
+      );
+      if (bySession.rowCount > 0) {
+        problem = bySession.rows[0];
+      }
+    }
+
+    const openLikeStatuses = ['published', 'open', 'awarded', 'closed'];
+    const isPublished = !!problem && openLikeStatuses.includes(problem.status) && !!problem.fee_paid;
+
+    return res.json({
+      sessionId,
+      checkoutStatus: session.status || null,
+      paymentStatus: session.payment_status || null,
+      isPublished,
+      problem: problem
+        ? {
+            id: problem.id,
+            title: problem.title,
+            status: problem.status,
+            feePaid: problem.fee_paid,
+            rewardAmount: Number(problem.amount || 0),
+            currency: problem.currency || 'USD',
+          }
+        : null,
+    });
+  } catch (err) {
+    if (err.code === 'resource_missing') {
+      return res.status(404).json({ error: 'Stripe session not found' });
+    }
+    console.error('session-status error:', err.message);
+    return res.status(500).json({ error: 'Could not fetch payment status' });
+  }
+});
+
 async function publishProblemFromPaymentIntent(paymentIntent) {
   const problemId = paymentIntent?.metadata?.problemId;
   if (!problemId) return;
