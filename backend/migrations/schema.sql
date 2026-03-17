@@ -48,6 +48,20 @@ CREATE TABLE IF NOT EXISTS solutions (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
+-- Stripe webhook events (idempotency + audit)
+CREATE TABLE IF NOT EXISTS stripe_webhook_events (
+  event_id TEXT PRIMARY KEY,
+  event_type TEXT NOT NULL,
+  session_id TEXT,
+  payment_intent_id TEXT,
+  customer_email TEXT,
+  status TEXT NOT NULL DEFAULT 'received', -- received | processed | failed | ignored | duplicate
+  error_message TEXT,
+  received_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  processed_at TIMESTAMP WITH TIME ZONE
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_problems_status ON problems(status);
 CREATE INDEX IF NOT EXISTS idx_solutions_problem ON solutions(problem_id);
+CREATE INDEX IF NOT EXISTS idx_stripe_webhook_events_status ON stripe_webhook_events(status);
