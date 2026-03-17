@@ -36,6 +36,12 @@ export default function Navbar() {
           >
             + Post Problem
           </Link>
+            <Link
+              href="/ai"
+              className="text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 px-4 py-2 rounded-xl transition shadow-md shadow-violet-500/20"
+            >
+              ✨ AI Advisor
+            </Link>
           {user ? (
             <>
               <Link href="/dashboard" className="text-sm font-medium text-gray-600 hover:text-sky-600 transition">
@@ -75,6 +81,7 @@ export default function Navbar() {
       {menuOpen && (
         <div className="md:hidden px-6 pb-4 border-t border-gray-100 space-y-2 pt-3">
           <Link href="/problems/new" className="block text-sm font-semibold text-sky-600">+ Post Problem</Link>
+            <Link href="/ai" className="block text-sm font-semibold text-violet-600">✨ AI Advisor</Link>
           {user ? (
             <>
               <Link href="/dashboard" className="block text-sm text-gray-600">Dashboard</Link>

@@ -5,6 +5,7 @@ const db = require('./db');
 const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const aiRoutes = require('./routes/ai');
 
 dotenv.config();
 
@@ -37,6 +38,8 @@ app.use(
   })
 );
 app.use(bodyParser.json());
+
+app.use('/api/ai', aiRoutes);
 
 function calculateCommission(amount) {
   return Math.round(amount * 0.10 * 100) / 100; // 10%

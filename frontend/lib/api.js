@@ -25,4 +25,6 @@ export const api = {
   selectWinner: (problemId, body, token) =>
     request('POST', `/problems/${problemId}/select-winner`, body, token),
   platformFees: () => request('GET', '/platform/fees'),
+  aiChat: (body, token) => request('POST', '/api/ai/chat', body, token),
+  aiHistory: (token) => request('GET', '/api/ai/history', null, token),
 };

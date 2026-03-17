@@ -20,6 +20,10 @@ services:
         fromDatabase:
           name: problemmarket-db
           property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
 
 databases:
   - name: problemmarket-db
