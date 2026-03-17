@@ -31,7 +31,9 @@ CREATE TABLE IF NOT EXISTS problems (
   title TEXT NOT NULL,
   description TEXT,
   reward_id UUID REFERENCES rewards(id) ON DELETE SET NULL,
-  status VARCHAR(32) DEFAULT 'open', -- open | awarded | closed
+  status VARCHAR(32) DEFAULT 'draft', -- draft | pending_payment | published | awarded | closed
+  fee_paid BOOLEAN NOT NULL DEFAULT false,
+  stripe_session_id TEXT UNIQUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );

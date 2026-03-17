@@ -6,6 +6,7 @@ const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const aiRoutes = require('./routes/ai');
+const { paymentsRouter, stripeWebhookHandler } = require('./routes/payments');
 
 dotenv.config();
 
@@ -37,8 +38,13 @@ app.use(
     },
   })
 );
+
+// Stripe webhook must receive the raw body for signature verification.
+app.post('/api/payments/webhook', express.raw({ type: 'application/json' }), stripeWebhookHandler);
+
 app.use(bodyParser.json());
 
+app.use('/api/payments', paymentsRouter);
 app.use('/api/ai', aiRoutes);
 
 function calculateCommission(amount) {
@@ -113,6 +119,7 @@ app.get('/problems', async (req, res) => {
     const q = `SELECT p.*, r.amount AS reward_amount, r.currency, r.escrow_status
                FROM problems p
                LEFT JOIN rewards r ON p.reward_id = r.id
+               WHERE p.status IN ('published', 'open', 'awarded', 'closed')
                ORDER BY p.created_at DESC`;
     const r = await db.query(q);
     res.json(r.rows);
@@ -124,32 +131,20 @@ app.get('/problems', async (req, res) => {
 
 // Create problem with reward (transaction)
 app.post('/problems', verifyToken, async (req, res) => {
-  const { title, description, reward } = req.body;
-  if (!title || !reward) return res.status(400).json({ error: 'title and reward required' });
-  const client = await db.pool.connect();
-  try {
-    await client.query('BEGIN');
-    const insertReward = 'INSERT INTO rewards(amount, currency) VALUES($1, $2) RETURNING id, amount, currency';
-    const r1 = await client.query(insertReward, [reward.amount || reward, reward.currency || 'USD']);
-    const rewardId = r1.rows[0].id;
-    const insertProblem = 'INSERT INTO problems(publisher_id, title, description, reward_id) VALUES($1, $2, $3, $4) RETURNING *';
-    const r2 = await client.query(insertProblem, [req.user.userId, title, description || '', rewardId]);
-    await client.query('COMMIT');
-    res.status(201).json({ problem: r2.rows[0], reward: r1.rows[0] });
-  } catch (err) {
-    await client.query('ROLLBACK');
-    console.error(err);
-    res.status(500).json({ error: 'db error' });
-  } finally {
-    client.release();
-  }
+  res.status(402).json({
+    error: 'Payment required. Use POST /api/payments/create-checkout-session before publishing.',
+  });
 });
 
 // Get problem by id with solutions
 app.get('/problems/:id', async (req, res) => {
   const id = req.params.id;
   try {
-    const pq = 'SELECT p.*, r.amount AS reward_amount, r.currency, r.escrow_status FROM problems p LEFT JOIN rewards r ON p.reward_id = r.id WHERE p.id = $1';
+    const pq = `SELECT p.*, r.amount AS reward_amount, r.currency, r.escrow_status
+                FROM problems p
+                LEFT JOIN rewards r ON p.reward_id = r.id
+                WHERE p.id = $1
+                  AND p.status IN ('published', 'open', 'awarded', 'closed')`;
     const pr = await db.query(pq, [id]);
     if (pr.rowCount === 0) return res.status(404).json({ error: 'not found' });
     const sq = 'SELECT s.* FROM solutions s WHERE s.problem_id = $1 ORDER BY s.created_at ASC';
@@ -172,7 +167,9 @@ app.post('/problems/:id/solutions', verifyToken, async (req, res) => {
     // ensure problem is open
     const pr = await db.query('SELECT status FROM problems WHERE id = $1', [problemId]);
     if (pr.rowCount === 0) return res.status(404).json({ error: 'problem not found' });
-    if (pr.rows[0].status !== 'open') return res.status(400).json({ error: 'problem not open' });
+    if (!['open', 'published'].includes(pr.rows[0].status)) {
+      return res.status(400).json({ error: 'problem not open' });
+    }
     const iq = 'INSERT INTO solutions(problem_id, author_id, content) VALUES($1, $2, $3) RETURNING *';
     const r = await db.query(iq, [problemId, req.user.userId, content]);
     res.status(201).json(r.rows[0]);

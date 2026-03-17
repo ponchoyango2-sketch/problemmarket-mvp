@@ -20,6 +20,8 @@ export const api = {
   getProblems: () => request('GET', '/problems'),
   getProblem: (id) => request('GET', `/problems/${id}`),
   createProblem: (body, token) => request('POST', '/problems', body, token),
+  createCheckoutSession: (body, token) =>
+    request('POST', '/api/payments/create-checkout-session', body, token),
   submitSolution: (problemId, body, token) =>
     request('POST', `/problems/${problemId}/solutions`, body, token),
   selectWinner: (problemId, body, token) =>

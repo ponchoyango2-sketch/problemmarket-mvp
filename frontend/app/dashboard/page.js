@@ -36,7 +36,7 @@ export default function DashboardPage() {
     );
   }
 
-  const open = myProblems.filter((p) => p.status === 'open');
+  const open = myProblems.filter((p) => p.status === 'open' || p.status === 'published');
   const awarded = myProblems.filter((p) => p.status === 'awarded');
 
   return (

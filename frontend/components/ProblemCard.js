@@ -3,6 +3,7 @@ import RewardBadge from './RewardBadge';
 
 const statusConfig = {
   open: { label: 'Open', classes: 'bg-sky-100 text-sky-700 border-sky-200' },
+  published: { label: 'Open', classes: 'bg-sky-100 text-sky-700 border-sky-200' },
   awarded: { label: 'Awarded', classes: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
   closed: { label: 'Closed', classes: 'bg-gray-100 text-gray-500 border-gray-200' },
 };

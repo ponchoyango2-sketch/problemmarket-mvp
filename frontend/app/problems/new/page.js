@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getToken, getUser } from '@/lib/auth';
 import { api } from '@/lib/api';
-import RewardBadge from '@/components/RewardBadge';
 
 const CURRENCIES = ['USD', 'EUR', 'GBP', 'MXN', 'BRL', 'CAD'];
 
@@ -39,16 +38,20 @@ export default function NewProblemPage() {
     }
     setLoading(true);
     try {
-      const data = await api.createProblem(
+      const data = await api.createCheckoutSession(
         {
-          publisher_id: user.id,
           title: form.title,
           description: form.description,
           reward: { amount: Number(form.reward), currency: form.currency },
         },
         token
       );
-      router.push(`/problems/${data.problem.id}`);
+
+      if (!data.url) {
+        throw new Error('No checkout URL returned');
+      }
+
+      window.location.assign(data.url);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -56,7 +59,8 @@ export default function NewProblemPage() {
     }
   }
 
-  const payout = form.reward ? (Number(form.reward) * 0.9).toFixed(2) : null;
+  const rewardAmount = Number(form.reward) || 0;
+  const publishFee = rewardAmount > 0 ? Math.max(5, rewardAmount * 0.05) : 0;
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-12">
@@ -132,16 +136,14 @@ export default function NewProblemPage() {
           </div>
         </div>
 
-        {/* Fee preview */}
-        {payout && (
-          <div className="flex items-center justify-between bg-sky-50 border border-sky-100 rounded-xl px-5 py-4">
-            <div className="text-sm text-sky-700">
-              <span className="font-semibold">Platform fee:</span> 10% = {form.currency} {(Number(form.reward) * 0.1).toFixed(2)}
-            </div>
-            <div className="flex items-center gap-2 text-sm text-sky-700">
-              <span>Winner receives:</span>
-              <RewardBadge amount={payout} currency={form.currency} />
-            </div>
+        {/* Publish fee preview */}
+        {rewardAmount > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-5 py-4 text-sm text-amber-900">
+            <p>
+              <span className="font-semibold">Publishing fee:</span> {form.currency}{' '}
+              {publishFee.toFixed(2)} (5% del reward o minimo {form.currency} 5.00)
+            </p>
+            <p className="mt-1 font-medium">Este pago no es reembolsable.</p>
           </div>
         )}
 
@@ -150,7 +152,7 @@ export default function NewProblemPage() {
           disabled={loading}
           className="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-3.5 rounded-2xl transition disabled:opacity-60 text-sm"
         >
-          {loading ? 'Posting...' : '🚀 Post Problem with Reward'}
+          {loading ? 'Redirigiendo al pago...' : 'Continuar al pago'}
         </button>
       </form>
     </div>

@@ -91,7 +91,8 @@ export default function ProblemPage() {
   }
 
   const isOwner = user && user.id === problem.publisher_id;
-  const canSelect = isOwner && problem.status === 'open';
+  const isOpenLike = problem.status === 'open' || problem.status === 'published';
+  const canSelect = isOwner && isOpenLike;
   const winner = (problem.solutions || []).find((s) => s.selected);
   const payout = (Number(problem.reward_amount) * 0.9).toFixed(2);
 
@@ -109,12 +110,12 @@ export default function ProblemPage() {
           </h1>
           <span
             className={`shrink-0 text-xs font-bold px-3 py-1 rounded-full border ${
-              problem.status === 'open'
+              isOpenLike
                 ? 'bg-sky-100 text-sky-700 border-sky-200'
                 : 'bg-emerald-100 text-emerald-700 border-emerald-200'
             }`}
           >
-            {problem.status === 'open' ? '🟢 Open' : '✅ Awarded'}
+            {isOpenLike ? '🟢 Open' : '✅ Awarded'}
           </span>
         </div>
 
@@ -129,7 +130,7 @@ export default function ProblemPage() {
           <span className="text-sm text-gray-400">
             {(problem.solutions || []).length} solution{(problem.solutions || []).length !== 1 ? 's' : ''}
           </span>
-          {problem.status === 'open' && (
+          {isOpenLike && (
             <span className="text-sm text-sky-600 bg-sky-50 px-3 py-1 rounded-full border border-sky-100">
               Winner gets {problem.currency} {payout}
             </span>
@@ -150,7 +151,7 @@ export default function ProblemPage() {
           </div>
         )}
 
-        {isOwner && problem.status === 'open' && (
+        {isOwner && isOpenLike && (
           <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-sm text-amber-800">
             👑 You are the problem owner. Review solutions below and select the best one as winner.
           </div>
@@ -196,7 +197,7 @@ export default function ProblemPage() {
       </div>
 
       {/* Submit solution form */}
-      {problem.status === 'open' && (
+      {isOpenLike && (
         <div className="bg-white border border-gray-200 rounded-3xl p-7">
           <h3 className="text-lg font-bold text-gray-900 mb-1">Submit your solution</h3>
           <p className="text-sm text-gray-400 mb-5">

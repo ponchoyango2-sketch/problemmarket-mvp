@@ -15,7 +15,7 @@ async function getProblems() {
 
 export default async function HomePage() {
   const problems = await getProblems();
-  const open = problems.filter((p) => p.status === 'open');
+  const open = problems.filter((p) => p.status === 'open' || p.status === 'published');
   const awarded = problems.filter((p) => p.status === 'awarded');
 
   return (

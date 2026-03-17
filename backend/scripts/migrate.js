@@ -7,6 +7,7 @@ async function run() {
     path.join(__dirname, '..', 'migrations', 'schema.sql'),
     path.join(__dirname, '..', 'migrations', '002_add_auth.sql'),
     path.join(__dirname, '..', 'migrations', '003_chat_history.sql'),
+    path.join(__dirname, '..', 'migrations', '004_add_problem_payment_fields.sql'),
   ];
 
   const client = await db.pool.connect();
