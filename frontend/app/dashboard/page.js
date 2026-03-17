@@ -23,7 +23,7 @@ export default function DashboardPage() {
     setUser(u);
     api
       .getProblems()
-      .then((all) => setMyProblems(all.filter((p) => p.publisher_id === u.id)))
+      .then((all) => setMyProblems(all))
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [router]);
@@ -60,7 +60,7 @@ export default function DashboardPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-10">
         {[
-          { label: 'Total Posted', value: myProblems.length, color: 'text-gray-900' },
+          { label: 'Total Problems', value: myProblems.length, color: 'text-gray-900' },
           { label: 'Open', value: open.length, color: 'text-sky-600' },
           { label: 'Awarded', value: awarded.length, color: 'text-emerald-600' },
         ].map((stat) => (
@@ -73,7 +73,7 @@ export default function DashboardPage() {
 
       {/* Problems list */}
       <section>
-        <h2 className="text-xl font-bold text-gray-800 mb-5">My Problems</h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-5">All Problems</h2>
         {myProblems.length === 0 ? (
           <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-3xl">
             <p className="text-4xl mb-3">🧩</p>
